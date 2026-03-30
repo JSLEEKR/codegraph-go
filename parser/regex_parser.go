@@ -163,14 +163,13 @@ func parsePython(filePath string, source []byte) ([]graph.Node, []graph.Edge) {
 			definedNames[funcName] = qn
 
 			scopes = append(scopes, scopeEntry{
-				name:   funcName,
-				indent: indent,
-				kind:   funcKind,
-				start:  lineNum,
+				name:       funcName,
+				indent:     indent,
+				kind:       funcKind,
+				start:      lineNum,
+				params:     "(" + params + ")",
+				returnType: retType,
 			})
-
-			_ = params  // stored in node
-			_ = retType // stored in node
 
 			containerQN := filePath
 			if parentName != "" {
@@ -650,6 +649,8 @@ func closeScopes(scopes []scopeEntry, indent int, lines []string, currentLine in
 				LineEnd:       lineEnd,
 				Language:      string(lang),
 				ParentName:    parentName,
+				Params:        top.params,
+				ReturnType:    top.returnType,
 				IsTest:        top.kind == graph.KindTest,
 			}
 			*nodes = append(*nodes, node)
@@ -676,10 +677,12 @@ func closeScopes(scopes []scopeEntry, indent int, lines []string, currentLine in
 // scopeEntry is defined as a local struct in parsePython; we use it at package level
 // for helper functions.
 type scopeEntry struct {
-	name   string
-	indent int
-	kind   graph.NodeKind
-	start  int
+	name       string
+	indent     int
+	kind       graph.NodeKind
+	start      int
+	params     string
+	returnType string
 }
 
 func currentQualifiedName(filePath string, scopes []scopeEntry, name string) string {

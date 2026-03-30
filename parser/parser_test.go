@@ -562,3 +562,36 @@ class Derived(Base):
 		t.Errorf("expected 1 inherit edge, got %d", len(inheritEdges))
 	}
 }
+
+func TestParseFilePythonParams(t *testing.T) {
+	src := `def greet(name: str, greeting: str = "hello") -> str:
+    return f"{greeting} {name}"
+
+class Calculator:
+    def add(self, a: int, b: int) -> int:
+        return a + b
+`
+	result, err := ParseFile("calc.py", []byte(src))
+	if err != nil {
+		t.Fatalf("ParseFile: %v", err)
+	}
+
+	for _, n := range result.Nodes {
+		if n.Name == "greet" {
+			if n.Params == "" {
+				t.Error("expected non-empty params for greet()")
+			}
+			if n.ReturnType == "" {
+				t.Error("expected non-empty return type for greet()")
+			}
+		}
+		if n.Name == "add" {
+			if n.Params == "" {
+				t.Error("expected non-empty params for add()")
+			}
+			if n.ReturnType == "" {
+				t.Error("expected non-empty return type for add()")
+			}
+		}
+	}
+}

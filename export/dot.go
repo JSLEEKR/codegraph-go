@@ -195,8 +195,9 @@ func ToFilteredDOT(g *graph.Graph, qualifiedNames []string, title string) string
 func escapeLabel(s string) string {
 	s = strings.ReplaceAll(s, `"`, `\"`)
 	s = strings.ReplaceAll(s, "\n", "\\n")
-	if len(s) > 40 {
-		s = s[:37] + "..."
+	runes := []rune(s)
+	if len(runes) > 40 {
+		s = string(runes[:37]) + "..."
 	}
 	return s
 }

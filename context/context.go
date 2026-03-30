@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -212,8 +213,8 @@ func estimateTokens(source string) int {
 // readSource reads source code lines from a file.
 func readSource(repoRoot, filePath string, startLine, endLine int) string {
 	fullPath := filePath
-	if repoRoot != "" && !strings.HasPrefix(filePath, "/") && !strings.Contains(filePath, ":\\") {
-		fullPath = repoRoot + "/" + filePath
+	if repoRoot != "" && !filepath.IsAbs(filePath) {
+		fullPath = filepath.Join(repoRoot, filePath)
 	}
 
 	data, err := os.ReadFile(fullPath)

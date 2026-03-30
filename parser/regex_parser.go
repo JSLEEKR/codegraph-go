@@ -97,7 +97,7 @@ func parsePython(filePath string, source []byte) ([]graph.Node, []graph.Edge) {
 			bases := m[3]
 
 			// Close scopes at same or lower indent
-			scopes = closeScopes(scopes, indent, lines, i, &nodes)
+			scopes = closeScopes(scopes, indent, lines, i, &nodes, filePath, LangPython)
 
 			qn := currentQualifiedName(filePath, scopes, className)
 			definedNames[className] = qn
@@ -147,7 +147,7 @@ func parsePython(filePath string, source []byte) ([]graph.Node, []graph.Edge) {
 			params := m[3]
 			retType := m[4]
 
-			scopes = closeScopes(scopes, indent, lines, i, &nodes)
+			scopes = closeScopes(scopes, indent, lines, i, &nodes, filePath, LangPython)
 
 			funcKind := graph.KindFunction
 			if isTest && strings.HasPrefix(funcName, "test_") {
@@ -190,7 +190,7 @@ func parsePython(filePath string, source []byte) ([]graph.Node, []graph.Edge) {
 	}
 
 	// Close remaining scopes
-	scopes = closeScopes(scopes, -1, lines, len(lines), &nodes)
+	scopes = closeScopes(scopes, -1, lines, len(lines), &nodes, filePath, LangPython)
 
 	// Second pass: extract calls
 	for i, line := range lines {
@@ -617,7 +617,7 @@ func parseTypeScript(filePath string, source []byte) ([]graph.Node, []graph.Edge
 
 // Helper functions
 
-func closeScopes(scopes []scopeEntry, indent int, lines []string, currentLine int, nodes *[]graph.Node) []scopeEntry {
+func closeScopes(scopes []scopeEntry, indent int, lines []string, currentLine int, nodes *[]graph.Node, filePath string, lang Language) []scopeEntry {
 	for len(scopes) > 0 {
 		top := scopes[len(scopes)-1]
 		if indent >= 0 && top.indent < indent {
@@ -630,7 +630,7 @@ func closeScopes(scopes []scopeEntry, indent int, lines []string, currentLine in
 			lineEnd = len(lines)
 		}
 
-		// Build qualified name
+		// Build qualified name from remaining scopes
 		var parentName string
 		for _, s := range scopes {
 			if s.kind == graph.KindClass {
@@ -638,26 +638,30 @@ func closeScopes(scopes []scopeEntry, indent int, lines []string, currentLine in
 			}
 		}
 
-		// closeScopes creates nodes without filePath/qualifiedName;
-		// the caller (parsePython) sets these on the returned nodes.
-		_ = parentName
+		qn := currentQualifiedName(filePath, scopes, top.name)
 
 		if top.kind == graph.KindFunction || top.kind == graph.KindTest {
 			node := graph.Node{
-				Kind:       top.kind,
-				Name:       top.name,
-				LineStart:  top.start,
-				LineEnd:    lineEnd,
-				ParentName: parentName,
-				IsTest:     top.kind == graph.KindTest,
+				Kind:          top.kind,
+				Name:          top.name,
+				QualifiedName: qn,
+				FilePath:      filePath,
+				LineStart:     top.start,
+				LineEnd:       lineEnd,
+				Language:      string(lang),
+				ParentName:    parentName,
+				IsTest:        top.kind == graph.KindTest,
 			}
 			*nodes = append(*nodes, node)
 		} else if top.kind == graph.KindClass {
 			node := graph.Node{
-				Kind:      top.kind,
-				Name:      top.name,
-				LineStart: top.start,
-				LineEnd:   lineEnd,
+				Kind:          top.kind,
+				Name:          top.name,
+				QualifiedName: qn,
+				FilePath:      filePath,
+				LineStart:     top.start,
+				LineEnd:       lineEnd,
+				Language:      string(lang),
 			}
 			*nodes = append(*nodes, node)
 		}

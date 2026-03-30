@@ -1,0 +1,20 @@
+# Binary
+codegraph
+codegraph.exe
+
+# Graph data
+.codegraph/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+*.test
+*.out
